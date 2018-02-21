@@ -56,6 +56,8 @@
 // #define DEFAULT_URL "http://webglsamples.org/video/video.html"
 // #define DEFAULT_URL "http://webglsamples.org/dynamic-cubemap/dynamic-cubemap.html"
 
+#define DEFAULT_ZOOM_STEP 0.1f
+
 static GMainLoop *main_loop = NULL;
 
 static struct {
@@ -147,9 +149,12 @@ static struct {
 
 static struct {
    struct wpe_view_backend *backend;
+   WebKitWebView *view;
    struct wl_resource* current_buffer;
    EGLImageKHR image;
    struct wl_callback *frame_callback;
+
+   double zoom_level;
 } wpe_view_data = {NULL, };
 
 
@@ -593,6 +598,22 @@ capture_app_key_bindings (uint32_t keysym,
       else if (modifiers == wpe_input_keyboard_modifier_control &&
                unicode == 0x17 && keysym == 0x77) {
          g_main_loop_quit (main_loop);
+         return true;
+      }
+      /* Ctrl+Plus, zoom in */
+      else if (modifiers == wpe_input_keyboard_modifier_control &&
+               unicode == XKB_KEY_equal && keysym == XKB_KEY_equal) {
+         wpe_view_data.zoom_level += DEFAULT_ZOOM_STEP;
+         webkit_web_view_set_zoom_level (wpe_view_data.view,
+                                         wpe_view_data.zoom_level);
+         return true;
+      }
+      /* Ctrl+Minus, zoom out */
+      else if (modifiers == wpe_input_keyboard_modifier_control &&
+               unicode == 0x2D && keysym == 0x2D) {
+         wpe_view_data.zoom_level -= DEFAULT_ZOOM_STEP;
+         webkit_web_view_set_zoom_level (wpe_view_data.view,
+                                         wpe_view_data.zoom_level);
          return true;
       }
    }
@@ -1279,12 +1300,14 @@ main (int32_t argc, char *argv[])
    assert (settings != NULL);
 
    /* WebKit web view */
-   WebKitWebView *view = g_object_new (webkit_web_view_get_type (),
-                                       "backend", wk_view_backend,
-                                       "web-context", web_context,
-                                       "settings", settings,
-                                       NULL);
-   assert (view != NULL);
+   wpe_view_data.view = g_object_new (webkit_web_view_get_type (),
+                                      "backend", wk_view_backend,
+                                      "web-context", web_context,
+                                      "settings", settings,
+                                      NULL);
+   assert (wpe_view_data.view != NULL);
+
+   wpe_view_data.zoom_level = 1.0;
 
    /* start the show */
    const char *url;
@@ -1293,7 +1316,7 @@ main (int32_t argc, char *argv[])
    else
       url = DEFAULT_URL;
 
-   webkit_web_view_load_uri (view, url);
+   webkit_web_view_load_uri (wpe_view_data.view, url);
 
    signal (SIGINT, trap_sigint);
    main_loop = g_main_loop_new (NULL, false);
@@ -1307,7 +1330,7 @@ main (int32_t argc, char *argv[])
       wl_callback_destroy (wpe_view_data.frame_callback);
    if (wpe_view_data.image != NULL)
       eglDestroyImage (egl_data.display, wpe_view_data.image);
-   g_object_unref (view);
+   g_object_unref (wpe_view_data.view);
    g_object_unref (settings);
    /* @FIXME: check why this segfaults
    wpe_view_backend_destroy (wpe_view_data.backend);

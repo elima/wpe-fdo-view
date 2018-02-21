@@ -1162,7 +1162,7 @@ clear_input (void)
 }
 
 static bool
-print_shader_log (GLuint shader)
+gl_utils_print_shader_log (GLuint shader)
 {
    GLint length;
    char buffer[4096] = {0};
@@ -1182,7 +1182,7 @@ print_shader_log (GLuint shader)
 }
 
 static GLuint
-utils_load_shader (const char *shader_source, GLenum type)
+gl_utils_load_shader (const char *shader_source, GLenum type)
 {
    GLuint shader = glCreateShader (type);
 
@@ -1191,7 +1191,7 @@ utils_load_shader (const char *shader_source, GLenum type)
    glCompileShader (shader);
    assert (glGetError () == GL_NO_ERROR);
 
-   print_shader_log (shader);
+   gl_utils_print_shader_log (shader);
 
    return shader;
 }
@@ -1220,12 +1220,13 @@ init_gles (void)
       "  my_FragColor = texture2D (u_tex, tex_coord);\n"
       "}\n";
 
-   GLuint vertex_shader = utils_load_shader (VERTEX_SOURCE, GL_VERTEX_SHADER);
+   GLuint vertex_shader = gl_utils_load_shader (VERTEX_SOURCE,
+                                                GL_VERTEX_SHADER);
    assert (vertex_shader >= 0);
    assert (glGetError () == GL_NO_ERROR);
 
-   GLuint fragment_shader = utils_load_shader (FRAGMENT_SOURCE,
-                                               GL_FRAGMENT_SHADER);
+   GLuint fragment_shader = gl_utils_load_shader (FRAGMENT_SOURCE,
+                                                  GL_FRAGMENT_SHADER);
    assert (fragment_shader >= 0);
    assert (glGetError () == GL_NO_ERROR);
 

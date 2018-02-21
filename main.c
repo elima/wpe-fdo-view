@@ -579,15 +579,22 @@ capture_app_key_bindings (uint32_t keysym,
                           uint32_t state,
                           uint8_t modifiers)
 {
-   /* fullscreen */
-   if (state == WL_KEYBOARD_KEY_STATE_PRESSED && modifiers == 0 &&
-       unicode == 0 && keysym == XKB_KEY_F11) {
-      if (! win_data.is_fullscreen)
-         zxdg_toplevel_v6_set_fullscreen (win_data.xdg_toplevel, NULL);
-      else
-         zxdg_toplevel_v6_unset_fullscreen (win_data.xdg_toplevel);
-      win_data.is_fullscreen = ! win_data.is_fullscreen;
-      return true;
+   if (state == WL_KEYBOARD_KEY_STATE_PRESSED) {
+      /* fullscreen */
+      if (modifiers == 0 && unicode == 0 && keysym == XKB_KEY_F11) {
+         if (! win_data.is_fullscreen)
+            zxdg_toplevel_v6_set_fullscreen (win_data.xdg_toplevel, NULL);
+         else
+            zxdg_toplevel_v6_unset_fullscreen (win_data.xdg_toplevel);
+         win_data.is_fullscreen = ! win_data.is_fullscreen;
+         return true;
+      }
+      /* Ctrl+W, exit the application */
+      else if (modifiers == wpe_input_keyboard_modifier_control &&
+               unicode == 0x17 && keysym == 0x77) {
+         g_main_loop_quit (main_loop);
+         return true;
+      }
    }
 
    return false;

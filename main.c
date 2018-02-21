@@ -115,6 +115,8 @@ static struct {
 
    uint32_t width;
    uint32_t height;
+
+   bool is_fullscreen;
 } win_data;
 
 static struct gl_data {
@@ -571,11 +573,35 @@ keyboard_on_leave (void *data,
    wl_data.keyboard.serial = serial;
 }
 
+static bool
+capture_app_key_bindings (uint32_t keysym,
+                          uint32_t unicode,
+                          uint32_t state,
+                          uint8_t modifiers)
+{
+   /* fullscreen */
+   if (state == WL_KEYBOARD_KEY_STATE_PRESSED && modifiers == 0 &&
+       unicode == 0 && keysym == XKB_KEY_F11) {
+      if (! win_data.is_fullscreen)
+         zxdg_toplevel_v6_set_fullscreen (win_data.xdg_toplevel, NULL);
+      else
+         zxdg_toplevel_v6_unset_fullscreen (win_data.xdg_toplevel);
+      win_data.is_fullscreen = ! win_data.is_fullscreen;
+      return true;
+   }
+
+   return false;
+}
+
 static void
 handle_key_event (uint32_t key, uint32_t state, uint32_t time)
 {
    uint32_t keysym = xkb_state_key_get_one_sym (xkb_data.state, key);
    uint32_t unicode = xkb_state_key_get_utf32 (xkb_data.state, key);
+
+   /* Capture app-level key-bindings here */
+   if (capture_app_key_bindings (keysym, unicode, state, xkb_data.modifiers))
+      return;
 
    if (xkb_data.compose_state != NULL
        && state == WL_KEYBOARD_KEY_STATE_PRESSED

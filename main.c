@@ -624,6 +624,18 @@ capture_app_key_bindings (uint32_t keysym,
                                          wpe_view_data.zoom_level);
          return true;
       }
+      /* Alt+Left, navigate back */
+      else if (modifiers == wpe_input_keyboard_modifier_alt &&
+               unicode == 0 && keysym == XKB_KEY_Left) {
+         webkit_web_view_go_back (wpe_view_data.view);
+         return true;
+      }
+      /* Alt+Right, navigate forward */
+      else if (modifiers == wpe_input_keyboard_modifier_alt &&
+               unicode == 0 && keysym == XKB_KEY_Right) {
+         webkit_web_view_go_forward (wpe_view_data.view);
+         return true;
+      }
    }
 
    return false;

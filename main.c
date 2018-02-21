@@ -616,6 +616,14 @@ capture_app_key_bindings (uint32_t keysym,
                                          wpe_view_data.zoom_level);
          return true;
       }
+      /* Ctrl+0, restore zoom level to 1.0 */
+      else if (modifiers == wpe_input_keyboard_modifier_control &&
+               unicode == XKB_KEY_0 && keysym == XKB_KEY_0) {
+         wpe_view_data.zoom_level = 1.0f;
+         webkit_web_view_set_zoom_level (wpe_view_data.view,
+                                         wpe_view_data.zoom_level);
+         return true;
+      }
    }
 
    return false;

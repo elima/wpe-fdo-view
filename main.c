@@ -944,7 +944,7 @@ seat_on_capabilities (void* data, struct wl_seat* seat, uint32_t capabilities)
       printf ("Keyboard ");
    } else if (! has_keyboard && wl_data.keyboard.obj != NULL) {
       wl_keyboard_release (wl_data.keyboard.obj);
-      wl_data.pointer.obj = NULL;
+      wl_data.keyboard.obj = NULL;
    }
 
    /* Touch */

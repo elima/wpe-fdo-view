@@ -96,6 +96,11 @@ static struct {
       uint32_t serial;
    } keyboard;
 
+   struct {
+      struct wl_touch *obj;
+      struct wpe_input_touch_event_raw points[10];
+   } touch;
+
    GSource *event_src;
 } wl_data = {NULL, };
 
@@ -792,6 +797,128 @@ static const struct wl_keyboard_listener keyboard_listener = {
 };
 
 static void
+touch_on_down (void *data,
+               struct wl_touch *touch,
+               uint32_t serial,
+               uint32_t time,
+               struct wl_surface *surface,
+               int32_t id,
+               wl_fixed_t x,
+               wl_fixed_t y)
+{
+   if (id < 0 || id >= 10)
+      return;
+
+   struct wpe_input_touch_event_raw raw_event = {
+      wpe_input_touch_event_type_down,
+      time,
+      id,
+      wl_fixed_to_int (x),
+      wl_fixed_to_int (y),
+   };
+
+   memcpy (&wl_data.touch.points[id],
+           &raw_event,
+           sizeof (struct wpe_input_touch_event_raw));
+
+   struct wpe_input_touch_event event = {
+      wl_data.touch.points,
+      10,
+      raw_event.type,
+      raw_event.id,
+      raw_event.time
+   };
+
+   wpe_view_backend_dispatch_touch_event (wpe_view_data.backend, &event);
+}
+
+static void
+touch_on_up (void *data,
+             struct wl_touch *touch,
+             uint32_t serial,
+             uint32_t time,
+             int32_t id)
+{
+   if (id < 0 || id >= 10)
+      return;
+
+   struct wpe_input_touch_event_raw raw_event = {
+      wpe_input_touch_event_type_up,
+      time,
+      id,
+      wl_data.touch.points[id].x,
+      wl_data.touch.points[id].y,
+   };
+
+   struct wpe_input_touch_event event = {
+      wl_data.touch.points,
+      10,
+      raw_event.type,
+      raw_event.id,
+      raw_event.time
+   };
+
+   wpe_view_backend_dispatch_touch_event (wpe_view_data.backend, &event);
+
+   memset (&wl_data.touch.points[id],
+           0x00,
+           sizeof (struct wpe_input_touch_event_raw));
+}
+
+static void
+touch_on_motion (void *data,
+                 struct wl_touch *touch,
+                 uint32_t time,
+                 int32_t id,
+                 wl_fixed_t x,
+                 wl_fixed_t y)
+{
+   if (id < 0 || id >= 10)
+      return;
+
+   struct wpe_input_touch_event_raw raw_event = {
+      wpe_input_touch_event_type_motion,
+      time,
+      id,
+      wl_fixed_to_int (x),
+      wl_fixed_to_int (y),
+   };
+
+   memcpy (&wl_data.touch.points[id],
+           &raw_event,
+           sizeof (struct wpe_input_touch_event_raw));
+
+   struct wpe_input_touch_event event = {
+      wl_data.touch.points,
+      10,
+      raw_event.type,
+      raw_event.id,
+      raw_event.time
+   };
+
+   wpe_view_backend_dispatch_touch_event (wpe_view_data.backend, &event);
+}
+
+static void
+touch_on_frame (void *data, struct wl_touch *touch)
+{
+   /* @FIXME: buffer touch events and handle them here */
+}
+
+static void
+touch_on_cancel (void *data, struct wl_touch *touch)
+{
+}
+
+static const struct wl_touch_listener touch_listener = {
+   .down = touch_on_down,
+   .up = touch_on_up,
+   .motion = touch_on_motion,
+   .frame = touch_on_frame,
+   .cancel = touch_on_cancel,
+};
+
+static void
 seat_on_capabilities (void* data, struct wl_seat* seat, uint32_t capabilities)
 {
    printf ("Seat caps: ");
@@ -818,6 +945,18 @@ seat_on_capabilities (void* data, struct wl_seat* seat, uint32_t capabilities)
    } else if (! has_keyboard && wl_data.keyboard.obj != NULL) {
       wl_keyboard_release (wl_data.keyboard.obj);
       wl_data.pointer.obj = NULL;
+   }
+
+   /* Touch */
+   const bool has_touch = capabilities & WL_SEAT_CAPABILITY_TOUCH;
+   if (has_touch && wl_data.touch.obj == NULL) {
+      wl_data.touch.obj = wl_seat_get_touch (wl_data.seat);
+      assert (wl_data.touch.obj != NULL);
+      wl_touch_add_listener (wl_data.touch.obj, &touch_listener, NULL);
+      printf ("Touch ");
+   } else if (! has_touch && wl_data.touch.obj != NULL) {
+      wl_touch_release (wl_data.touch.obj);
+      wl_data.touch.obj = NULL;
    }
 
    printf ("\n");

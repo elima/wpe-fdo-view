@@ -36,7 +36,6 @@
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include <GLES3/gl3.h>
-#include <GLES3/gl31.h>
 #include <GLES2/gl2ext.h>
 
 /* for mmap */
@@ -108,6 +107,8 @@ static struct {
    struct egl_display *display;
    EGLContext context;
    PFNGLEGLIMAGETARGETTEXTURE2DOESPROC glEglImageTargetTexture2D;
+   PFNEGLCREATEIMAGEKHRPROC eglCreateImage;
+   PFNEGLDESTROYIMAGEKHRPROC eglDestroyImage;
    EGLConfig egl_config;
 } egl_data;
 
@@ -1000,7 +1001,7 @@ on_surface_frame (void *data, struct wl_callback *callback, uint32_t time)
          (wpe_host_data.exportable, wpe_view_data.current_buffer);
       wpe_view_data.current_buffer = NULL;
 
-      eglDestroyImage (egl_data.display, wpe_view_data.image);
+      egl_data.eglDestroyImage (egl_data.display, wpe_view_data.image);
       wpe_view_data.image = NULL;
    }
 }
@@ -1024,12 +1025,35 @@ request_frame (void)
 static void
 draw (void)
 {
-   egl_data.glEglImageTargetTexture2D (GL_TEXTURE_2D, wpe_view_data.image);
-
-   glClearColor (0.0, 0.0, 0.0, 1.0);
+   glClearColor (0.0, 0.0, 0.0, 0.5);
    glClear (GL_COLOR_BUFFER_BIT);
 
-   glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
+   egl_data.glEglImageTargetTexture2D (GL_TEXTURE_2D, wpe_view_data.image);
+
+   static const GLfloat s_vertices[4][2] = {
+        { -1.0, 1.0 },
+        { 1.0, 1.0 },
+        { -1.0, -1.0 },
+        { 1.0, -1.0 },
+   };
+
+   static const GLfloat s_texturePos[4][2] = {
+        { 0, 0 },
+        { 1, 0 },
+        { 0, 1 },
+        { 1, 1 },
+   };
+
+   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, s_vertices);
+   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, s_texturePos);
+
+   glEnableVertexAttribArray(0);
+   glEnableVertexAttribArray(1);
+
+   glDrawArrays (GL_TRIANGLE_STRIP, 0, 4);
+
+   glDisableVertexAttribArray(0);
+   glDisableVertexAttribArray(1);
 
    request_frame ();
 
@@ -1041,15 +1065,15 @@ on_export_buffer_resource (void* data, struct wl_resource* buffer_resource)
 {
    wpe_view_data.current_buffer = buffer_resource;
 
-   static EGLAttrib image_attrs[] = {
+   static EGLint image_attrs[] = {
       EGL_WAYLAND_PLANE_WL, 0,
       EGL_NONE
    };
-   wpe_view_data.image = eglCreateImage (egl_data.display,
-                                         egl_data.context,
-                                         EGL_WAYLAND_BUFFER_WL,
-                                         buffer_resource,
-                                         image_attrs);
+   wpe_view_data.image = egl_data.eglCreateImage (egl_data.display,
+                                                  egl_data.context,
+                                                  EGL_WAYLAND_BUFFER_WL,
+                                                  buffer_resource,
+                                                  image_attrs);
    assert (wpe_view_data.image != NULL);
 
    draw ();
@@ -1146,6 +1170,14 @@ init_egl (void)
    egl_data.glEglImageTargetTexture2D = (PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)
       eglGetProcAddress ("glEGLImageTargetTexture2DOES");
    assert (egl_data.glEglImageTargetTexture2D != NULL);
+
+   egl_data.eglCreateImage = (PFNEGLCREATEIMAGEKHRPROC)
+      eglGetProcAddress ("eglCreateImageKHR");
+   assert (egl_data.eglCreateImage != NULL);
+
+   egl_data.eglDestroyImage = (PFNEGLDESTROYIMAGEKHRPROC)
+      eglGetProcAddress ("eglDestroyImageKHR");
+   assert (egl_data.eglDestroyImage != NULL);
 }
 
 static void
@@ -1339,24 +1371,27 @@ static void
 init_gles (void)
 {
    const char *VERTEX_SOURCE =
-      "#version 310 es\n"
+      "#version 300 es\n"
+      "\n"
       "out vec2 tex_coord;\n"
-      "const vec2 vertices[4] = vec2[](vec2(1.0, -1.0), vec2(1.0, 1.0), vec2(-1.0, 1.0), vec2(-1.0, -1.0));\n"
-      "const vec2 coords[4] = vec2[](vec2(1.0, 1.0), vec2(1.0, 0.0), vec2(0.0, 0.0), vec2(0.0, 1.0));\n"
+      "in vec2 pos_attr; \n"
+      "in vec2 tex_coord_attr; \n"
+      "\n"
       "void main() {\n"
-      "  tex_coord = coords[gl_VertexID];\n"
-      "  gl_Position = vec4(vertices[gl_VertexID], 0.0, 1.0);\n"
+      "  tex_coord = tex_coord_attr; \n"
+      "  gl_Position = vec4(pos_attr, 0.0, 1.0); \n"
       "}\n";
 
    const char *FRAGMENT_SOURCE =
-      "#version 310 es\n"
+      "#version 300 es\n"
+      "\n"
       "precision mediump float;\n"
       "in vec2 tex_coord;\n"
       "out vec4 my_FragColor;\n"
       "uniform sampler2D u_tex;\n"
       "\n"
       "void main() {\n"
-      "  my_FragColor = texture2D (u_tex, tex_coord);\n"
+      "  my_FragColor = texture (u_tex, tex_coord);\n"
       "}\n";
 
    GLuint vertex_shader = gl_utils_load_shader (VERTEX_SOURCE,
@@ -1489,7 +1524,7 @@ main (int32_t argc, char *argv[])
    if (wpe_view_data.frame_callback != NULL)
       wl_callback_destroy (wpe_view_data.frame_callback);
    if (wpe_view_data.image != NULL)
-      eglDestroyImage (egl_data.display, wpe_view_data.image);
+      egl_data.eglDestroyImage (egl_data.display, wpe_view_data.image);
    g_object_unref (wpe_view_data.view);
    g_object_unref (settings);
    /* @FIXME: check why this segfaults

@@ -1,6 +1,5 @@
 .PHONY: all clean
 
-CC = gcc
 CFLAGS = -ggdb -O0 -Wall -std=c99
 PKG_CONFIG_LIBS = \
 	egl glesv2 \

@@ -35,7 +35,7 @@
 #include <wayland-egl.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
-#include <GLES3/gl3.h>
+#include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 
 /* for mmap */
@@ -1371,27 +1371,24 @@ static void
 init_gles (void)
 {
    const char *VERTEX_SOURCE =
-      "#version 300 es\n"
-      "\n"
-      "out vec2 tex_coord;\n"
-      "in vec2 pos_attr; \n"
-      "in vec2 tex_coord_attr; \n"
-      "\n"
+      "attribute vec2 pos;\n"
+      "attribute vec2 texture;\n"
+      "varying vec2 v_texture;\n"
+      "const mat4 proj = mat4( 4.0, 0.0, 0.0, 0.0, "
+      "                        0.0, 4.0, 0.0, 0.0, "
+      "                        0.0, 0.0, 2.0, 0.0, "
+      "                        -3.0, -1.0, 0.0, 1.0); \n"
       "void main() {\n"
-      "  tex_coord = tex_coord_attr; \n"
-      "  gl_Position = vec4(pos_attr, 0.0, 1.0); \n"
+      "  v_texture = texture;\n"
+      "  gl_Position = /* proj * */vec4(pos, 0, 1);\n"
       "}\n";
 
    const char *FRAGMENT_SOURCE =
-      "#version 300 es\n"
-      "\n"
       "precision mediump float;\n"
-      "in vec2 tex_coord;\n"
-      "out vec4 my_FragColor;\n"
       "uniform sampler2D u_tex;\n"
-      "\n"
+      "varying vec2 v_texture;\n"
       "void main() {\n"
-      "  my_FragColor = texture (u_tex, tex_coord);\n"
+      "  gl_FragColor = texture2D(u_tex, v_texture);\n"
       "}\n";
 
    GLuint vertex_shader = gl_utils_load_shader (VERTEX_SOURCE,
@@ -1423,7 +1420,7 @@ init_gles (void)
    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
    gl_data.tex_loc = glGetUniformLocation (gl_data.program, "u_tex");
-   assert (gl_data.tex_loc != GL_INVALID_INDEX);
+   assert (gl_data.tex_loc != -1);
 
    glGenTextures (1, &gl_data.tex);
    assert (glGetError () == GL_NO_ERROR);

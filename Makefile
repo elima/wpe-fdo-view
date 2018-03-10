@@ -1,6 +1,7 @@
 .PHONY: all clean
 
-CFLAGS = -ggdb -O0 -Wall -std=c99
+CFLAGS += -ggdb -O0 -Wall -std=c99
+LDFLAGS +=
 PKG_CONFIG_LIBS = \
 	egl glesv2 \
 	wayland-egl wayland-client \
@@ -24,7 +25,7 @@ fullscreen-shell-unstable-v1-protocol.o: \
 	fullscreen-shell-unstable-v1-client-protocol.h
 
 wpe-fdo-view: $(SOURCE) $(OBJ_DEPS)
-	$(CC) $(CFLAGS) \
+	$(CC) $(CFLAGS) $(LDFLAGS) \
 		`pkg-config --libs --cflags $(PKG_CONFIG_LIBS)` \
 		-o $@ \
 		$^

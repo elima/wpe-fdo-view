@@ -259,8 +259,6 @@ resize_window (void)
                          win_data.height,
                          0, 0);
 
-   glViewport (0, 0, win_data.width, win_data.height);
-
    wpe_view_backend_dispatch_set_size (wpe_view_data.backend,
                                        win_data.width,
                                        win_data.height);
@@ -1025,6 +1023,8 @@ request_frame (void)
 static void
 draw (void)
 {
+   glViewport (0, 0, win_data.width, win_data.height);
+
    glClearColor (0.0, 0.0, 0.0, 0.5);
    glClear (GL_COLOR_BUFFER_BIT);
 

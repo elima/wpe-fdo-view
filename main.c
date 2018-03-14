@@ -1146,11 +1146,14 @@ init_egl (void)
 
    static const EGLint config_attribs[] = {
       EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-      EGL_RED_SIZE, 1,
-      EGL_GREEN_SIZE, 1,
-      EGL_BLUE_SIZE, 1,
-      EGL_ALPHA_SIZE, 1,
-      EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT_KHR,
+      EGL_RED_SIZE,     8,
+      EGL_GREEN_SIZE,   8,
+      EGL_BLUE_SIZE,    8,
+      EGL_ALPHA_SIZE,   8,
+      EGL_DEPTH_SIZE,   0,
+      EGL_STENCIL_SIZE, 0,
+      EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+      EGL_SAMPLES, 0,
       EGL_NONE
    };
 

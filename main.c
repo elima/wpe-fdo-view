@@ -324,10 +324,13 @@ xdg_toplevel_on_configure (void *data,
                            int32_t width, int32_t height,
                            struct wl_array *states)
 {
+   if (width == 0 || height == 0) {
+      width = DEFAULT_WIDTH;
+      height = DEFAULT_HEIGHT;
+   }
+
    win_data.width = width;
    win_data.height = height;
-   if (width == 0 || height == 0)
-      return;
 
    printf ("New XDG toplevel configuration: (%u, %u)\n", width, height);
 

@@ -1073,7 +1073,7 @@ on_export_buffer_resource (void* data, struct wl_resource* buffer_resource)
       EGL_NONE
    };
    wpe_view_data.image = egl_data.eglCreateImage (egl_data.display,
-                                                  egl_data.context,
+                                                  EGL_NO_CONTEXT,
                                                   EGL_WAYLAND_BUFFER_WL,
                                                   buffer_resource,
                                                   image_attrs);

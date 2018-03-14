@@ -1034,29 +1034,29 @@ draw (void)
    egl_data.glEglImageTargetTexture2D (GL_TEXTURE_2D, wpe_view_data.image);
 
    static const GLfloat s_vertices[4][2] = {
-        { -1.0, 1.0 },
-        { 1.0, 1.0 },
-        { -1.0, -1.0 },
-        { 1.0, -1.0 },
+      { -1.0,  1.0 },
+      {  1.0,  1.0 },
+      { -1.0, -1.0 },
+      {  1.0, -1.0 },
    };
 
    static const GLfloat s_texturePos[4][2] = {
-        { 0, 0 },
-        { 1, 0 },
-        { 0, 1 },
-        { 1, 1 },
+      { 0, 0 },
+      { 1, 0 },
+      { 0, 1 },
+      { 1, 1 },
    };
 
-   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, s_vertices);
-   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, s_texturePos);
+   glVertexAttribPointer (0, 2, GL_FLOAT, GL_FALSE, 0, s_vertices);
+   glVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, 0, s_texturePos);
 
-   glEnableVertexAttribArray(0);
-   glEnableVertexAttribArray(1);
+   glEnableVertexAttribArray (0);
+   glEnableVertexAttribArray (1);
 
    glDrawArrays (GL_TRIANGLE_STRIP, 0, 4);
 
-   glDisableVertexAttribArray(0);
-   glDisableVertexAttribArray(1);
+   glDisableVertexAttribArray (0);
+   glDisableVertexAttribArray (1);
 
    request_frame ();
 
@@ -1491,7 +1491,7 @@ main (int32_t argc, char *argv[])
    /* WebKit settings */
    WebKitSettings *settings =
       webkit_settings_new_with_settings ("allow-file-access-from-file-urls",
-                                         true,
+                                true,
                                 "allow-universal-access-from-file-urls", true,
                                 "enable-write-console-messages-to-stdout", true,
                                 NULL);

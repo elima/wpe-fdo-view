@@ -156,7 +156,7 @@ static struct {
 static struct {
    struct wpe_view_backend *backend;
    WebKitWebView *view;
-   struct wl_resource* current_buffer;
+   struct wpe_view_backend_exportable_fdo_buffer *current_buffer;
    EGLImageKHR image;
    struct wl_callback *frame_callback;
 
@@ -1066,113 +1066,6 @@ draw (void)
 }
 
 static void
-on_export_buffer_resource (void* data, struct wl_resource* buffer_resource)
-{
-   wpe_view_data.current_buffer = buffer_resource;
-
-   static EGLint image_attrs[] = {
-      EGL_WAYLAND_PLANE_WL, 0,
-      EGL_NONE
-   };
-   wpe_view_data.image = egl_data.eglCreateImage (egl_data.display,
-                                                  EGL_NO_CONTEXT,
-                                                  EGL_WAYLAND_BUFFER_WL,
-                                                  buffer_resource,
-                                                  image_attrs);
-   assert (wpe_view_data.image != NULL);
-
-   draw ();
-}
-
-static void
-on_export_linux_dmabuf (void *data,
-                        uint32_t width,
-                        uint32_t height,
-                        uint32_t format,
-                        uint32_t flags,
-                        uint32_t num_planes,
-                        const int32_t *fds,
-                        const uint32_t *strides,
-                        const uint32_t *offsets,
-                        const uint64_t *modifiers)
-{
-   EGLint attribs[50];
-   int atti = 0;
-
-   attribs[atti++] = EGL_WIDTH;
-   attribs[atti++] = width;
-   attribs[atti++] = EGL_HEIGHT;
-   attribs[atti++] = height;
-   attribs[atti++] = EGL_LINUX_DRM_FOURCC_EXT;
-   attribs[atti++] = format;
-
-   if (num_planes > 0) {
-      attribs[atti++] = EGL_DMA_BUF_PLANE0_FD_EXT;
-      attribs[atti++] = fds[0];
-      attribs[atti++] = EGL_DMA_BUF_PLANE0_OFFSET_EXT;
-      attribs[atti++] = offsets[0];
-      attribs[atti++] = EGL_DMA_BUF_PLANE0_PITCH_EXT;
-      attribs[atti++] = strides[0];
-      attribs[atti++] = EGL_DMA_BUF_PLANE0_MODIFIER_LO_EXT;
-      attribs[atti++] = modifiers[0] & 0xFFFFFFFF;
-      attribs[atti++] = EGL_DMA_BUF_PLANE0_MODIFIER_HI_EXT;
-      attribs[atti++] = modifiers[0] >> 32;
-   }
-
-   /* @FIXME: factorize all these crap.
-   if (num_planes > 1) {
-      attribs[atti++] = EGL_DMA_BUF_PLANE1_FD_EXT;
-      attribs[atti++] = fds[1];
-      attribs[atti++] = EGL_DMA_BUF_PLANE1_OFFSET_EXT;
-      attribs[atti++] = offsets[1];
-      attribs[atti++] = EGL_DMA_BUF_PLANE1_PITCH_EXT;
-      attribs[atti++] = strides[1];
-      attribs[atti++] = EGL_DMA_BUF_PLANE1_MODIFIER_LO_EXT;
-      attribs[atti++] = modifiers[1] & 0xFFFFFFFF;
-      attribs[atti++] = EGL_DMA_BUF_PLANE1_MODIFIER_HI_EXT;
-      attribs[atti++] = modifiers[1] >> 32;
-   }
-
-   if (attributes->n_planes > 2) {
-      attribs[atti++] = EGL_DMA_BUF_PLANE2_FD_EXT;
-      attribs[atti++] = attributes->fd[2];
-      attribs[atti++] = EGL_DMA_BUF_PLANE2_OFFSET_EXT;
-      attribs[atti++] = attributes->offset[2];
-      attribs[atti++] = EGL_DMA_BUF_PLANE2_PITCH_EXT;
-      attribs[atti++] = attributes->stride[2];
-      attribs[atti++] = EGL_DMA_BUF_PLANE2_MODIFIER_LO_EXT;
-      attribs[atti++] = attributes->modifier[2] & 0xFFFFFFFF;
-      attribs[atti++] = EGL_DMA_BUF_PLANE2_MODIFIER_HI_EXT;
-      attribs[atti++] = attributes->modifier[2] >> 32;
-   }
-
-   if (attributes->n_planes > 3) {
-      attribs[atti++] = EGL_DMA_BUF_PLANE3_FD_EXT;
-      attribs[atti++] = attributes->fd[3];
-      attribs[atti++] = EGL_DMA_BUF_PLANE3_OFFSET_EXT;
-      attribs[atti++] = attributes->offset[3];
-      attribs[atti++] = EGL_DMA_BUF_PLANE3_PITCH_EXT;
-      attribs[atti++] = attributes->stride[3];
-      attribs[atti++] = EGL_DMA_BUF_PLANE3_MODIFIER_LO_EXT;
-      attribs[atti++] = attributes->modifier[3] & 0xFFFFFFFF;
-      attribs[atti++] = EGL_DMA_BUF_PLANE3_MODIFIER_HI_EXT;
-      attribs[atti++] = attributes->modifier[3] >> 32;
-   }
-   */
-
-   attribs[atti++] = EGL_NONE;
-
-   wpe_view_data.image = egl_data.eglCreateImage (egl_data.display,
-                                                  EGL_NO_CONTEXT,
-                                                  EGL_LINUX_DMA_BUF_EXT,
-                                                  NULL,
-                                                  attribs);
-   assert (wpe_view_data.image != NULL);
-
-   draw ();
-}
-
-static void
 init_wayland (void)
 {
    wl_data.display = wl_display_connect (NULL);
@@ -1540,6 +1433,22 @@ clear_gles (void)
    glDeleteTextures (1, &gl_data.tex);
 }
 
+static void
+on_export_buffer (void *user_data,
+                  enum wpe_view_backend_buffer_type buffer_type,
+                  struct wpe_view_backend_exportable_fdo_buffer *buffer)
+{
+   wpe_view_data.image =
+      wpe_view_backend_exportable_fdo_get_egl_image (wpe_host_data.exportable,
+                                                     buffer,
+                                                     egl_data.display);
+   assert (wpe_view_data.image != NULL);
+
+   wpe_view_data.current_buffer = buffer;
+
+   draw ();
+}
+
 int32_t
 main (int32_t argc, char *argv[])
 {
@@ -1553,8 +1462,7 @@ main (int32_t argc, char *argv[])
    wpe_fdo_initialize_for_egl_display (egl_data.display);
 
    struct wpe_view_backend_exportable_fdo_client exportable_client = {
-      .export_buffer_resource = on_export_buffer_resource,
-      .export_linux_dmabuf = on_export_linux_dmabuf,
+      .export_buffer = on_export_buffer,
    };
 
    wpe_host_data.exportable =

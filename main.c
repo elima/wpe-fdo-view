@@ -1386,7 +1386,7 @@ init_gles (void)
       "                        -3.0, -1.0, 0.0, 1.0); \n"
       "void main() {\n"
       "  v_texture = texture;\n"
-      "  gl_Position = /* proj * */vec4(pos, 0, 1);\n"
+      "  gl_Position = proj * vec4(pos, 0, 1);\n"
       "}\n";
 
    const char *FRAGMENT_SOURCE =

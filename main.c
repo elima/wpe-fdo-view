@@ -852,6 +852,10 @@ touch_on_up (void *data,
       wl_data.touch.points[id].y,
    };
 
+   memcpy (&wl_data.touch.points[id],
+           &raw_event,
+           sizeof (struct wpe_input_touch_event_raw));
+
    struct wpe_input_touch_event event = {
       wl_data.touch.points,
       10,

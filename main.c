@@ -1604,6 +1604,10 @@ main (int32_t argc, char *argv[])
                                 NULL);
    assert (settings != NULL);
 
+   const char* user_agent_env_var = g_getenv("WPE_FDO_VIEW_USER_AGENT");
+   if (user_agent_env_var != NULL)
+      g_object_set(settings, "user-agent", user_agent_env_var, NULL);
+
    /* WebKit web view */
    wpe_view_data.view = g_object_new (webkit_web_view_get_type (),
                                       "backend", wk_view_backend,

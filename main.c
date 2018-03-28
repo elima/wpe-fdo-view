@@ -324,9 +324,20 @@ xdg_toplevel_on_configure (void *data,
                            int32_t width, int32_t height,
                            struct wl_array *states)
 {
-   if (width == 0 || height == 0) {
-      width = DEFAULT_WIDTH;
-      height = DEFAULT_HEIGHT;
+   const char* env_var;
+   if (width == 0) {
+      env_var = g_getenv("WPE_FDO_VIEW_WIDTH");
+      if (env_var != NULL)
+         width = (int32_t) g_ascii_strtod(env_var, NULL);
+      else
+         width = DEFAULT_WIDTH;
+   }
+   if (height == 0) {
+      env_var = g_getenv("WPE_FDO_VIEW_HEIGHT");
+      if (env_var != NULL)
+         height = (int32_t) g_ascii_strtod(env_var, NULL);
+      else
+         height = DEFAULT_HEIGHT;
    }
 
    win_data.width = width;

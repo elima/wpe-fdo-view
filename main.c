@@ -1589,6 +1589,7 @@ main (int32_t argc, char *argv[])
                                 true,
                                 "allow-universal-access-from-file-urls", true,
                                 "enable-write-console-messages-to-stdout", true,
+                                "enable-mediasource", true,
                                 NULL);
    assert (settings != NULL);
 

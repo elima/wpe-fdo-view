@@ -345,6 +345,12 @@ xdg_toplevel_on_configure (void *data,
 
    printf ("New XDG toplevel configuration: (%u, %u)\n", width, height);
 
+   env_var = g_getenv("WPE_FDO_VIEW_FULLSCREEN");
+   if (env_var != NULL && g_ascii_strtod(env_var, NULL) >= 1.0) {
+     zxdg_toplevel_v6_set_fullscreen(win_data.xdg_toplevel, NULL);
+     win_data.is_fullscreen = TRUE;
+   }
+
    resize_window ();
 }
 

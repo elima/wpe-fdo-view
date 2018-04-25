@@ -1491,13 +1491,9 @@ init_gles (void)
       "attribute vec2 pos;\n"
       "attribute vec2 texture;\n"
       "varying vec2 v_texture;\n"
-      "const mat4 proj = mat4( 4.0, 0.0, 0.0, 0.0, "
-      "                        0.0, 4.0, 0.0, 0.0, "
-      "                        0.0, 0.0, 2.0, 0.0, "
-      "                        -3.0, -1.0, 0.0, 1.0); \n"
       "void main() {\n"
       "  v_texture = texture;\n"
-      "  gl_Position = /* proj * */vec4(pos, 0, 1);\n"
+      "  gl_Position = vec4(pos, 0, 1);\n"
       "}\n";
 
    const char *FRAGMENT_SOURCE =
@@ -1524,6 +1520,10 @@ init_gles (void)
    assert (glGetError () == GL_NO_ERROR);
    glAttachShader (gl_data.program, fragment_shader);
    assert (glGetError () == GL_NO_ERROR);
+
+   glBindAttribLocation (gl_data.program, 0, "pos");
+   glBindAttribLocation (gl_data.program, 1, "texture");
+
    glLinkProgram (gl_data.program);
    assert (glGetError () == GL_NO_ERROR);
 

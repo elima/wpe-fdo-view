@@ -1044,9 +1044,6 @@ draw (void)
 {
    glViewport (0, 0, win_data.width, win_data.height);
 
-   glClearColor (0.0, 0.0, 0.0, 0.5);
-   glClear (GL_COLOR_BUFFER_BIT);
-
    egl_data.glEglImageTargetTexture2D (GL_TEXTURE_2D, wpe_view_data.image);
 
    static const GLfloat s_vertices[4][2] = {
@@ -1165,7 +1162,7 @@ init_egl (void)
       EGL_RED_SIZE,     8,
       EGL_GREEN_SIZE,   8,
       EGL_BLUE_SIZE,    8,
-      EGL_ALPHA_SIZE,   8,
+      EGL_ALPHA_SIZE,   0,
       EGL_DEPTH_SIZE,   0,
       EGL_STENCIL_SIZE, 0,
       EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,

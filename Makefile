@@ -1,10 +1,10 @@
 .PHONY: all clean
 
-CFLAGS += -ggdb -O0 -Wall -std=c99
+CFLAGS += -ggdb -O0 -Wall -std=c99 -DWL_EGL_PLATFORM -DEGL_API_FB
 LDFLAGS =
 PKG_CONFIG_LIBS = \
 	egl glesv2 \
-	wayland-egl wayland-client \
+	wayland-client \
 	xkbcommon \
 	wpe-webkit-0.1 wpe-0.1 wpebackend-fdo-0.1
 

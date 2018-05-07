@@ -1,7 +1,7 @@
 .PHONY: all clean
 
 CFLAGS += -ggdb -O0 -Wall -std=c99
-LDFLAGS +=
+LDFLAGS =
 PKG_CONFIG_LIBS = \
 	egl glesv2 \
 	wayland-egl wayland-client \

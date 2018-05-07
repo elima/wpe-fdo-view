@@ -21,10 +21,9 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <wpe-fdo/view-backend-exportable.h>
-#include <wpe-fdo/initialize-egl.h>
 #include <wpe/webkit.h>
-#include <wpe/input.h>
+#include <wpe/fdo.h>
+#include <wpe/fdo-egl.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <glib.h>

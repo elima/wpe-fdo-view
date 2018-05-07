@@ -6,7 +6,7 @@ PKG_CONFIG_LIBS = \
 	egl glesv2 \
 	wayland-egl wayland-client \
 	xkbcommon \
-	wpe wpebackend-fdo wpe-webkit
+	wpe-webkit-0.1 wpe-0.1 wpebackend-fdo-0.1
 
 TARGET = wpe-fdo-view
 SOURCE = main.c
